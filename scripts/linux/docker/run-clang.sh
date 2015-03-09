@@ -5,11 +5,11 @@ set -o pipefail
 
 docker build \
     -t mapbox/gl-native:linux \
-    docker/linux
+    scripts/linux/docker
 
 docker run \
     -i \
-    -e "CXX=g++" \
+    -e "CXX=clang++" \
     -v `pwd`:/home/mapbox/build \
     -t mapbox/gl-native:linux \
-    build/docker/linux/test.sh
+    build/scripts/linux/docker/test.sh

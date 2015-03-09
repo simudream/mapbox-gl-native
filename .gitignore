@@ -16,6 +16,9 @@
 /test/build
 /test/node_modules
 /test/fixtures/*/*_actual.*
+/toolchain
+/packages
+/node_modules
 /include/mbgl/shader/shaders.hpp
 /src/shader/shaders_gl.cpp
 /src/shader/shaders_gles2.cpp
