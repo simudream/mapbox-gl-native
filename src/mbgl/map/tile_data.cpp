@@ -1,5 +1,4 @@
 #include <mbgl/map/tile_data.hpp>
-#include <mbgl/map/map.hpp>
 #include <mbgl/map/environment.hpp>
 #include <mbgl/style/style_source.hpp>
 

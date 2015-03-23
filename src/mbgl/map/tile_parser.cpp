@@ -2,23 +2,14 @@
 #include <mbgl/map/vector_tile_data.hpp>
 #include <mbgl/platform/log.hpp>
 #include <mbgl/style/style.hpp>
-#include <mbgl/style/style_layer.hpp>
 #include <mbgl/style/style_layer_group.hpp>
 #include <mbgl/style/style_layout.hpp>
 #include <mbgl/renderer/fill_bucket.hpp>
 #include <mbgl/renderer/line_bucket.hpp>
 #include <mbgl/renderer/symbol_bucket.hpp>
-#include <mbgl/renderer/raster_bucket.hpp>
-#include <mbgl/util/raster.hpp>
 #include <mbgl/util/constants.hpp>
-#include <mbgl/util/token.hpp>
-#include <mbgl/geometry/glyph_atlas.hpp>
-#include <mbgl/text/glyph_store.hpp>
 #include <mbgl/text/collision.hpp>
-#include <mbgl/text/glyph.hpp>
-#include <mbgl/map/map.hpp>
 #include <mbgl/util/std.hpp>
-#include <mbgl/util/utf.hpp>
 
 #include <locale>
 
