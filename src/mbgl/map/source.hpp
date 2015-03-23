@@ -17,7 +17,6 @@
 
 namespace mbgl {
 
-class Map;
 class MapData;
 class Environment;
 class GlyphAtlas;
@@ -35,9 +34,8 @@ class Source : public std::enable_shared_from_this<Source>, private util::noncop
 public:
     Source(SourceInfo&);
 
-    void load(Map&, MapData&, Environment&);
-    void update(Map&,
-                MapData&,
+    void load(MapData&, Environment&, std::function<void()> callback);
+    void update(MapData&,
                 uv::worker&,
                 util::ptr<Style>,
                 GlyphAtlas&,
@@ -46,7 +44,7 @@ public:
                 util::ptr<Sprite>,
                 TexturePool&,
                 std::function<void()> callback);
-    void invalidateTiles(Map&, std::vector<Tile::ID>&);
+    void invalidateTiles(const std::vector<Tile::ID>&);
 
     void updateMatrices(const mat4 &projMatrix, const TransformState &transform);
     void drawClippingMasks(Painter &painter);
@@ -65,8 +63,7 @@ private:
     int32_t coveringZoomLevel(const TransformState&) const;
     std::forward_list<Tile::ID> coveringTiles(const TransformState&) const;
 
-    TileData::State addTile(Map&,
-                            MapData&,
+    TileData::State addTile(MapData&,
                             uv::worker&,
                             util::ptr<Style>,
                             GlyphAtlas&,
