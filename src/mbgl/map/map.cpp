@@ -62,6 +62,20 @@ namespace mbgl {
 
 class MapContext {
 public:
+    MapContext() :
+      glyphAtlas(util::make_unique<GlyphAtlas>(1024, 1024)),
+      spriteAtlas(util::make_unique<SpriteAtlas>(512, 512)),
+      lineAtlas(util::make_unique<LineAtlas>(512, 512)),
+      painter(util::make_unique<Painter>(*spriteAtlas, *glyphAtlas, *lineAtlas))
+    {
+
+    }
+
+public:
+    std::unique_ptr<GlyphAtlas> glyphAtlas;
+    std::unique_ptr<SpriteAtlas> spriteAtlas;
+    std::unique_ptr<LineAtlas> lineAtlas;
+    std::unique_ptr<Painter> painter;
     std::set<util::ptr<StyleSource>> activeSources;
 };
 
@@ -73,12 +87,8 @@ Map::Map(View& view_, FileSource& fileSource_)
       data(util::make_unique<MapData>(view_)),
       context(util::make_unique<MapContext>()),
       fileSource(fileSource_),
-      glyphAtlas(util::make_unique<GlyphAtlas>(1024, 1024)),
       glyphStore(std::make_shared<GlyphStore>(*env)),
-      spriteAtlas(util::make_unique<SpriteAtlas>(512, 512)),
-      lineAtlas(util::make_unique<LineAtlas>(512, 512)),
-      texturePool(std::make_shared<TexturePool>()),
-      painter(util::make_unique<Painter>(*spriteAtlas, *glyphAtlas, *lineAtlas))
+      texturePool(std::make_shared<TexturePool>())
 {
     view.initialize(this);
 }
@@ -101,10 +111,10 @@ Map::~Map() {
     glyphStore.reset();
     style.reset();
     workers.reset();
-    painter.reset();
-    lineAtlas.reset();
-    spriteAtlas.reset();
-    glyphAtlas.reset();
+    context->painter.reset();
+    context->lineAtlas.reset();
+    context->spriteAtlas.reset();
+    context->glyphAtlas.reset();
 
     uv_run(env->loop, UV_RUN_DEFAULT);
 
@@ -340,8 +350,8 @@ void Map::checkForPause() {
 }
 
 void Map::terminate() {
-    assert(painter);
-    painter->terminate();
+    assert(context->painter);
+    context->painter->terminate();
     view.deactivate();
 }
 
@@ -349,8 +359,8 @@ void Map::terminate() {
 
 void Map::setup() {
     assert(Environment::currentlyOn(ThreadType::Map));
-    assert(painter);
-    painter->setup();
+    assert(context->painter);
+    context->painter->setup();
 }
 
 void Map::setStyleURL(const std::string &url) {
@@ -730,8 +740,8 @@ void Map::updateSources(const util::ptr<StyleLayerGroup> &group) {
 void Map::updateTiles() {
     assert(Environment::currentlyOn(ThreadType::Map));
     for (const auto &source : context->activeSources) {
-        source->source->update(*data, getWorker(), style, *glyphAtlas, *glyphStore, *spriteAtlas,
-                               getSprite(), *texturePool, [this]() {
+        source->source->update(*data, getWorker(), style, *context->glyphAtlas, *glyphStore,
+                               *context->spriteAtlas, getSprite(), *texturePool, [this]() {
             assert(Environment::currentlyOn(ThreadType::Map));
             triggerUpdate();
         });
@@ -792,8 +802,8 @@ void Map::prepare() {
         reloadStyle();
     }
     if (u & static_cast<UpdateType>(Update::Debug)) {
-        assert(painter);
-        painter->setDebug(data->getDebug());
+        assert(context->painter);
+        context->painter->setDebug(data->getDebug());
     }
     if (u & static_cast<UpdateType>(Update::DefaultTransitionDuration)) {
         if (style) {
@@ -822,8 +832,8 @@ void Map::prepare() {
         style->updateProperties(state.getNormalizedZoom(), animationTime);
 
         // Allow the sprite atlas to potentially pull new sprite images if needed.
-        spriteAtlas->resize(state.getPixelRatio());
-        spriteAtlas->setSprite(getSprite());
+        context->spriteAtlas->resize(state.getPixelRatio());
+        context->spriteAtlas->setSprite(getSprite());
 
         updateTiles();
     }
@@ -839,8 +849,8 @@ void Map::render() {
     // Cleanup OpenGL objects that we abandoned since the last render call.
     env->performCleanup();
 
-    assert(painter);
-    painter->render(*style, context->activeSources,
+    assert(context->painter);
+    context->painter->render(*style, context->activeSources,
                     data->getTransformState(), data->getAnimationTime());
     // Schedule another rerender when we definitely need a next frame.
     if (data->transform.needsTransition() || style->hasTransitions()) {
