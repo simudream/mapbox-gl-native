@@ -21,18 +21,13 @@
 
 namespace mbgl {
 
-class GlyphStore;
-class LayerDescription;
 class Sprite;
 class Style;
-class StyleLayer;
 class StyleLayerGroup;
-class TexturePool;
 class FileSource;
 class View;
 class Environment;
 class EnvironmentScope;
-class AnnotationManager;
 class MapData;
 class MapContext;
 
