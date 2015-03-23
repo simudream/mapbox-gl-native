@@ -374,7 +374,8 @@ std::string Map::getStyleJSON() const {
 }
 
 util::ptr<Sprite> Map::getSprite() {
-    const float pixelRatio = state.getPixelRatio();
+    assert(Environment::currentlyOn(ThreadType::Map));
+    const float pixelRatio = data->getTransformState().getPixelRatio();
     const std::string &sprite_url = style->getSpriteURL();
     if (!sprite || !sprite->hasPixelRatio(pixelRatio)) {
         sprite = Sprite::Create(sprite_url, pixelRatio, *env);
@@ -418,7 +419,7 @@ void Map::setLatLng(LatLng latLng, std::chrono::steady_clock::duration duration)
 }
 
 LatLng Map::getLatLng() const {
-    return state.getLatLng();
+    return transform.getLatLng();
 }
 
 void Map::startPanning() {
@@ -606,10 +607,6 @@ bool Map::getDebug() const {
     return data->getDebug();
 }
 
-std::chrono::steady_clock::time_point Map::getTime() const {
-    return data->getAnimationTime();
-}
-
 void Map::addClass(const std::string& klass) {
     if (data->addClass(klass)) {
         triggerUpdate(Update::Classes);
@@ -665,7 +662,7 @@ void Map::updateSources() {
         if (source->enabled) {
             if (!source->source) {
                 source->source = std::make_shared<Source>(source->info);
-                source->source->load(*this, *env);
+                source->source->load(*this, *data, *env);
             }
         } else {
             source->source.reset();
@@ -695,7 +692,7 @@ void Map::updateSources(const util::ptr<StyleLayerGroup> &group) {
 void Map::updateTiles() {
     assert(Environment::currentlyOn(ThreadType::Map));
     for (const auto &source : activeSources) {
-        source->source->update(*this, getWorker(), style, *glyphAtlas, *glyphStore,
+        source->source->update(*this, *data, getWorker(), style, *glyphAtlas, *glyphStore,
                                *spriteAtlas, getSprite(), *texturePool, [this]() {
             assert(Environment::currentlyOn(ThreadType::Map));
             triggerUpdate();
@@ -706,7 +703,7 @@ void Map::updateTiles() {
 void Map::update() {
     assert(Environment::currentlyOn(ThreadType::Map));
 
-    if (state.hasSize()) {
+    if (data->getTransformState().hasSize()) {
         prepare();
     }
 }
@@ -779,7 +776,8 @@ void Map::prepare() {
         transform.updateTransitions(animationTime);
     }
 
-    state = transform.currentState();
+    data->setTransformState(transform.currentState());
+    auto& state = data->getTransformState();
 
     if (style) {
         updateSources();
@@ -805,7 +803,7 @@ void Map::render() {
 
     assert(painter);
     painter->render(*style, activeSources,
-                    state, data->getAnimationTime());
+                    data->getTransformState(), data->getAnimationTime());
     // Schedule another rerender when we definitely need a next frame.
     if (transform.needsTransition() || style->hasTransitions()) {
         triggerUpdate();
