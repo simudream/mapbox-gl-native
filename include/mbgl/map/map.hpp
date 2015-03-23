@@ -28,7 +28,6 @@ class Sprite;
 class Style;
 class StyleLayer;
 class StyleLayerGroup;
-class StyleSource;
 class TexturePool;
 class FileSource;
 class View;
@@ -39,6 +38,7 @@ class Environment;
 class EnvironmentScope;
 class AnnotationManager;
 class MapData;
+class MapContext;
 
 class Map : private util::noncopyable {
     friend class View;
@@ -208,6 +208,7 @@ private:
     std::unique_ptr<EnvironmentScope> scope;
     View &view;
     const std::unique_ptr<MapData> data;
+    const std::unique_ptr<MapContext> context;
 
 private:
     std::unique_ptr<uv::worker> workers;
@@ -242,8 +243,6 @@ private:
     std::unique_ptr<LineAtlas> lineAtlas;
     util::ptr<TexturePool> texturePool;
     std::unique_ptr<Painter> painter;
-
-    std::set<util::ptr<StyleSource>> activeSources;
 
     std::atomic<UpdateType> updated;
 };

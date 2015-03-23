@@ -58,13 +58,20 @@ const static bool uvVersionCheck = []() {
     return true;
 }();
 
-using namespace mbgl;
+namespace mbgl {
+
+class MapContext {
+public:
+    std::set<util::ptr<StyleSource>> activeSources;
+};
+
 
 Map::Map(View& view_, FileSource& fileSource_)
     : env(util::make_unique<Environment>(fileSource_)),
       scope(util::make_unique<EnvironmentScope>(*env, ThreadType::Main, "Main")),
       view(view_),
       data(util::make_unique<MapData>(view_)),
+      context(util::make_unique<MapContext>()),
       fileSource(fileSource_),
       glyphAtlas(util::make_unique<GlyphAtlas>(1024, 1024)),
       glyphStore(std::make_shared<GlyphStore>(*env)),
@@ -89,7 +96,7 @@ Map::~Map() {
         "MapandMain");
 
     // Explicitly reset all pointers.
-    activeSources.clear();
+    context->activeSources.clear();
     sprite.reset();
     glyphStore.reset();
     style.reset();
@@ -127,7 +134,7 @@ void Map::start(bool startPaused) {
         // Remove all of these to make sure they are destructed in the correct thread.
         style.reset();
         workers.reset();
-        activeSources.clear();
+        context->activeSources.clear();
 
         terminating = true;
 
@@ -610,7 +617,7 @@ LatLngBounds Map::getBoundsForAnnotations(const std::vector<uint32_t>& annotatio
 
 void Map::updateAnnotationTiles(const std::vector<Tile::ID>& ids) {
     assert(Environment::currentlyOn(ThreadType::Main));
-    for (const auto &source : activeSources) {
+    for (const auto &source : context->activeSources) {
         if (source->info.type == SourceType::Annotations) {
             source->source->invalidateTiles(ids);
             triggerUpdate();
@@ -676,7 +683,7 @@ void Map::updateSources() {
     assert(Environment::currentlyOn(ThreadType::Map));
 
     // First, disable all existing sources.
-    for (const auto& source : activeSources) {
+    for (const auto& source : context->activeSources) {
         source->enabled = false;
     }
 
@@ -686,7 +693,7 @@ void Map::updateSources() {
     }
 
     // Then, construct or destroy the actual source object, depending on enabled state.
-    for (const auto& source : activeSources) {
+    for (const auto& source : context->activeSources) {
         if (source->enabled) {
             if (!source->source) {
                 source->source = std::make_shared<Source>(source->info);
@@ -701,7 +708,7 @@ void Map::updateSources() {
     }
 
     // Finally, remove all sources that are disabled.
-    util::erase_if(activeSources, [](util::ptr<StyleSource> source){
+    util::erase_if(context->activeSources, [](util::ptr<StyleSource> source){
         return !source->enabled;
     });
 }
@@ -714,7 +721,7 @@ void Map::updateSources(const util::ptr<StyleLayerGroup> &group) {
     for (const util::ptr<StyleLayer> &layer : group->layers) {
         if (!layer) continue;
         if (layer->bucket && layer->bucket->style_source) {
-            (*activeSources.emplace(layer->bucket->style_source).first)->enabled = true;
+            (*context->activeSources.emplace(layer->bucket->style_source).first)->enabled = true;
         }
 
     }
@@ -722,7 +729,7 @@ void Map::updateSources(const util::ptr<StyleLayerGroup> &group) {
 
 void Map::updateTiles() {
     assert(Environment::currentlyOn(ThreadType::Map));
-    for (const auto &source : activeSources) {
+    for (const auto &source : context->activeSources) {
         source->source->update(*data, getWorker(), style, *glyphAtlas, *glyphStore, *spriteAtlas,
                                getSprite(), *texturePool, [this]() {
             assert(Environment::currentlyOn(ThreadType::Map));
@@ -833,10 +840,12 @@ void Map::render() {
     env->performCleanup();
 
     assert(painter);
-    painter->render(*style, activeSources,
+    painter->render(*style, context->activeSources,
                     data->getTransformState(), data->getAnimationTime());
     // Schedule another rerender when we definitely need a next frame.
     if (data->transform.needsTransition() || style->hasTransitions()) {
         triggerUpdate();
     }
+}
+
 }
