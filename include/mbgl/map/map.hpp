@@ -230,7 +230,6 @@ private:
     std::atomic_bool isStopped;
 
     util::ptr<Style> style;
-    util::ptr<Sprite> sprite;
 
     std::atomic<UpdateType> updated;
 };
