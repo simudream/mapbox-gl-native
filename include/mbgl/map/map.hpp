@@ -204,7 +204,7 @@ private:
     std::unique_ptr<EnvironmentScope> scope;
     View &view;
     const std::unique_ptr<MapData> data;
-    const std::unique_ptr<MapContext> context;
+    std::unique_ptr<MapContext> context;
 
 private:
     std::unique_ptr<uv::worker> workers;
@@ -232,7 +232,6 @@ private:
     util::ptr<GlyphStore> glyphStore;
     util::ptr<Style> style;
     util::ptr<Sprite> sprite;
-    util::ptr<TexturePool> texturePool;
 
     std::atomic<UpdateType> updated;
 };

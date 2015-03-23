@@ -66,16 +66,18 @@ public:
       glyphAtlas(util::make_unique<GlyphAtlas>(1024, 1024)),
       spriteAtlas(util::make_unique<SpriteAtlas>(512, 512)),
       lineAtlas(util::make_unique<LineAtlas>(512, 512)),
+      texturePool(util::make_unique<TexturePool>()),
       painter(util::make_unique<Painter>(*spriteAtlas, *glyphAtlas, *lineAtlas))
     {
 
     }
 
 public:
-    std::unique_ptr<GlyphAtlas> glyphAtlas;
-    std::unique_ptr<SpriteAtlas> spriteAtlas;
-    std::unique_ptr<LineAtlas> lineAtlas;
-    std::unique_ptr<Painter> painter;
+    const std::unique_ptr<GlyphAtlas> glyphAtlas;
+    const std::unique_ptr<SpriteAtlas> spriteAtlas;
+    const std::unique_ptr<LineAtlas> lineAtlas;
+    const std::unique_ptr<TexturePool> texturePool;
+    const std::unique_ptr<Painter> painter;
     std::set<util::ptr<StyleSource>> activeSources;
 };
 
@@ -86,8 +88,7 @@ Map::Map(View& view_, FileSource& fileSource_)
       view(view_),
       data(util::make_unique<MapData>(view_)),
       context(util::make_unique<MapContext>()),
-      glyphStore(std::make_shared<GlyphStore>(*env)),
-      texturePool(std::make_shared<TexturePool>())
+      glyphStore(std::make_shared<GlyphStore>(*env))
 {
     view.initialize(this);
 }
@@ -105,15 +106,11 @@ Map::~Map() {
         "MapandMain");
 
     // Explicitly reset all pointers.
-    context->activeSources.clear();
     sprite.reset();
     glyphStore.reset();
     style.reset();
     workers.reset();
-    context->painter.reset();
-    context->lineAtlas.reset();
-    context->spriteAtlas.reset();
-    context->glyphAtlas.reset();
+    context.reset();
 
     uv_run(env->loop, UV_RUN_DEFAULT);
 
@@ -740,7 +737,7 @@ void Map::updateTiles() {
     assert(Environment::currentlyOn(ThreadType::Map));
     for (const auto &source : context->activeSources) {
         source->source->update(*data, getWorker(), style, *context->glyphAtlas, *glyphStore,
-                               *context->spriteAtlas, getSprite(), *texturePool, [this]() {
+                               *context->spriteAtlas, getSprite(), *context->texturePool, [this]() {
             assert(Environment::currentlyOn(ThreadType::Map));
             triggerUpdate();
         });
