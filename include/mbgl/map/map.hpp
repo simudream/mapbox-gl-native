@@ -21,7 +21,6 @@
 
 namespace mbgl {
 
-class Sprite;
 class FileSource;
 class View;
 class Environment;
@@ -59,23 +58,8 @@ public:
     // Triggers a synchronous or asynchronous render.
     void renderSync();
 
-    // Unconditionally performs a render with the current map state. May only be called from the Map
-    // thread.
-    void render();
-
     // Notifies the Map thread that the state has changed and an update might be necessary.
-    using UpdateType = uint32_t;
-    enum class Update : UpdateType {
-        Nothing                   = 0,
-        StyleInfo                 = 1 << 0,
-        Debug                     = 1 << 1,
-        DefaultTransitionDuration = 1 << 2,
-        Classes                   = 1 << 3,
-    };
-    void triggerUpdate(Update = Update::Nothing);
-
-    // Releases resources immediately
-    void terminate();
+    void update();
 
     // Styling
     void addClass(const std::string&);
@@ -162,22 +146,6 @@ private:
     // Setup
     void setup();
 
-    void updateTiles();
-    void updateSources();
-
-    // Triggered by triggerUpdate();
-    void update();
-
-    // Loads the style set in the data object. Called by Update::StyleInfo
-    void reloadStyle();
-    void loadStyleJSON(const std::string& json, const std::string& base);
-
-    // Prepares a map render by updating the tiles we need for the current view, as well as updating
-    // the stylesheet.
-    void prepare();
-
-    void updateAnnotationTiles(const std::vector<Tile::ID>&);
-
     const std::unique_ptr<Environment> env;
     std::unique_ptr<EnvironmentScope> scope;
     View &view;
@@ -186,10 +154,7 @@ private:
 
 private:
     std::thread thread;
-    std::unique_ptr<uv::async> asyncTerminate;
-    std::unique_ptr<uv::async> asyncUpdate;
 
-    bool terminating = false;
     bool pausing = false;
     bool isPaused = false;
     std::mutex mutexRun;
@@ -197,15 +162,8 @@ private:
     std::mutex mutexPause;
     std::condition_variable condPause;
 
-    // Used to signal that rendering completed.
-    bool rendered = false;
-    std::condition_variable condRendered;
-    std::mutex mutexRendered;
-
     // Stores whether the map thread has been stopped already.
     std::atomic_bool isStopped;
-
-    std::atomic<UpdateType> updated;
 };
 
 }

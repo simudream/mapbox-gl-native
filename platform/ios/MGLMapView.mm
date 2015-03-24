@@ -536,7 +536,7 @@ mbgl::DefaultFileSource *mbglFileSource = nullptr;
 - (void)layoutSubviews
 {
     [super layoutSubviews];
-    mbglMap->triggerUpdate();
+    mbglMap->update();
 }
 
 #pragma mark - Life Cycle -
@@ -1965,7 +1965,7 @@ class MBGLView : public mbgl::View
         View::resize(width, height, ratio, fbWidth, fbHeight);
     }
 
-    void invalidate() override
+    void invalidate(std::function<void()>) override
     {
         [nativeView performSelectorOnMainThread:@selector(invalidate)
                                      withObject:nil

@@ -23,7 +23,7 @@ public:
     void activate() override;
     void deactivate() override;
     void notify() override;
-    void invalidate() override;
+    void invalidate(std::function<void()> render) override;
 
     void notifyMapChange(mbgl::MapChange change, std::chrono::steady_clock::duration delay = std::chrono::steady_clock::duration::zero()) override;
 
