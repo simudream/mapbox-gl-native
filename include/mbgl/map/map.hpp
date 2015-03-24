@@ -171,7 +171,6 @@ private:
 
     void updateTiles();
     void updateSources();
-    void updateSources(const util::ptr<StyleLayerGroup> &group);
 
     // Triggered by triggerUpdate();
     void update();

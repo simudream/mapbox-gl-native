@@ -34,4 +34,19 @@ uv::worker& MapContext::getWorker() {
     return *workers;
 }
 
+void MapContext::updateSources(const util::ptr<StyleLayerGroup>& group) {
+    assert(Environment::currentlyOn(ThreadType::Map));
+    if (!group) {
+        return;
+    }
+    for (const util::ptr<StyleLayer>& layer : group->layers) {
+        if (!layer) {
+            continue;
+        }
+        if (layer->bucket && layer->bucket->style_source) {
+            (*activeSources.emplace(layer->bucket->style_source).first)->enabled = true;
+        }
+    }
+}
+
 }

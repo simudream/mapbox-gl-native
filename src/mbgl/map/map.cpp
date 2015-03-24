@@ -664,7 +664,7 @@ void Map::updateSources() {
 
     // Then, reenable all of those that we actually use when drawing this layer.
     if (style) {
-        updateSources(style->layers);
+        context->updateSources(style->layers);
     }
 
     // Then, construct or destroy the actual source object, depending on enabled state.
@@ -686,20 +686,6 @@ void Map::updateSources() {
     util::erase_if(context->activeSources, [](util::ptr<StyleSource> source){
         return !source->enabled;
     });
-}
-
-void Map::updateSources(const util::ptr<StyleLayerGroup> &group) {
-    assert(Environment::currentlyOn(ThreadType::Map));
-    if (!group) {
-        return;
-    }
-    for (const util::ptr<StyleLayer> &layer : group->layers) {
-        if (!layer) continue;
-        if (layer->bucket && layer->bucket->style_source) {
-            (*context->activeSources.emplace(layer->bucket->style_source).first)->enabled = true;
-        }
-
-    }
 }
 
 void Map::updateTiles() {

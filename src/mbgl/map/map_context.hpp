@@ -27,6 +27,7 @@ public:
     MapContext(Environment&);
 
     uv::worker& getWorker();
+    void updateSources(const util::ptr<StyleLayerGroup>&);
 
 public:
     std::unique_ptr<uv::worker> workers;
