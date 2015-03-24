@@ -12,6 +12,7 @@ class worker;
 namespace mbgl {
 
 class Environment;
+class MapData;
 class GlyphStore;
 class GlyphAtlas;
 class SpriteAtlas;
@@ -25,12 +26,16 @@ class StyleLayerGroup;
 
 class MapContext {
 public:
-    MapContext(Environment&);
+    MapContext(Environment&, MapData&);
 
     uv::worker& getWorker();
+    util::ptr<Sprite> getSprite();
     void updateSources(const util::ptr<StyleLayerGroup>&);
 
 public:
+    Environment& env;
+    MapData& data;
+
     std::unique_ptr<uv::worker> workers;
     const std::unique_ptr<GlyphStore> glyphStore;
     const std::unique_ptr<GlyphAtlas> glyphAtlas;
