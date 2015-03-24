@@ -7,6 +7,7 @@
 
 namespace uv {
 class worker;
+class async;
 }
 
 namespace mbgl {
@@ -28,6 +29,10 @@ class MapContext {
 public:
     MapContext(Environment&, MapData&);
 
+    // Triggers a render. Can be called from any thread.
+    void triggerRender();
+
+    // These can only be called from the Map thread.
     uv::worker& getWorker();
     util::ptr<Sprite> getSprite();
     void updateSources(const util::ptr<StyleLayerGroup>&);
@@ -35,6 +40,8 @@ public:
 public:
     Environment& env;
     MapData& data;
+
+    std::unique_ptr<uv::async> asyncRender;
 
     std::unique_ptr<uv::worker> workers;
     const std::unique_ptr<GlyphStore> glyphStore;

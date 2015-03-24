@@ -74,9 +74,6 @@ public:
     };
     void triggerUpdate(Update = Update::Nothing);
 
-    // Triggers a render. Can be called from any thread.
-    void triggerRender();
-
     // Releases resources immediately
     void terminate();
 
@@ -199,7 +196,6 @@ private:
     std::thread thread;
     std::unique_ptr<uv::async> asyncTerminate;
     std::unique_ptr<uv::async> asyncUpdate;
-    std::unique_ptr<uv::async> asyncRender;
 
     bool terminating = false;
     bool pausing = false;

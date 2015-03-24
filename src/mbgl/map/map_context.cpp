@@ -34,6 +34,11 @@ MapContext::MapContext(Environment& env_, MapData& data_)
       painter(util::make_unique<Painter>(*spriteAtlas, *glyphAtlas, *lineAtlas)) {
 }
 
+void MapContext::triggerRender() {
+    assert(asyncRender);
+    asyncRender->send();
+}
+
 uv::worker& MapContext::getWorker() {
     assert(workers);
     return *workers;
@@ -49,7 +54,6 @@ util::ptr<Sprite> MapContext::getSprite() {
 
     return sprite;
 }
-
 
 void MapContext::updateSources(const util::ptr<StyleLayerGroup>& group) {
     assert(Environment::currentlyOn(ThreadType::Map));
