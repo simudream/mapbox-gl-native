@@ -20,6 +20,12 @@ struct StyleInfo {
     std::string json;
 };
 
+enum class MapMode : uint8_t {
+    None, // we're not doing any processing
+    Continuous, // continually updating map
+    Static, // a once-off static image.
+};
+
 class MapData {
     using Lock = std::lock_guard<std::mutex>;
 
@@ -104,6 +110,7 @@ public:
 public:
     Transform transform;
     AnnotationManager annotationManager;
+    MapMode mode = MapMode::None;
 
 private:
     mutable std::mutex mtx;

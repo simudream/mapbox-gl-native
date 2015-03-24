@@ -72,7 +72,7 @@ Map::Map(View& view_, FileSource& fileSource_)
 }
 
 Map::~Map() {
-    if (mode == Mode::Continuous) {
+    if (data->mode == MapMode::Continuous) {
         stop();
     }
 
@@ -94,11 +94,11 @@ Map::~Map() {
 
 void Map::start(bool startPaused) {
     assert(Environment::currentlyOn(ThreadType::Main));
-    assert(mode == Mode::None);
+    assert(data->mode == MapMode::None);
 
     // When starting map rendering in another thread, we perform async/continuously
     // updated rendering. Only in these cases, we attach the async handlers.
-    mode = Mode::Continuous;
+    data->mode = MapMode::Continuous;
 
     // Reset the flag.
     isStopped = false;
@@ -160,7 +160,7 @@ void Map::start(bool startPaused) {
 
 void Map::stop(std::function<void ()> callback) {
     assert(Environment::currentlyOn(ThreadType::Main));
-    assert(mode == Mode::Continuous);
+    assert(data->mode == MapMode::Continuous);
 
     asyncTerminate->send();
 
@@ -182,12 +182,12 @@ void Map::stop(std::function<void ()> callback) {
     // already finished executing.
     thread.join();
 
-    mode = Mode::None;
+    data->mode = MapMode::None;
 }
 
 void Map::pause(bool waitForPause) {
     assert(Environment::currentlyOn(ThreadType::Main));
-    assert(mode == Mode::Continuous);
+    assert(data->mode == MapMode::Continuous);
     mutexRun.lock();
     pausing = true;
     mutexRun.unlock();
@@ -205,7 +205,7 @@ void Map::pause(bool waitForPause) {
 
 void Map::resume() {
     assert(Environment::currentlyOn(ThreadType::Main));
-    assert(mode == Mode::Continuous);
+    assert(data->mode == MapMode::Continuous);
 
     mutexRun.lock();
     pausing = false;
@@ -217,8 +217,8 @@ void Map::run() {
     ThreadType threadType = ThreadType::Map;
     std::string threadName("Map");
 
-    if (mode == Mode::None) {
-        mode = Mode::Static;
+    if (data->mode == MapMode::None) {
+        data->mode = MapMode::Static;
 
         // FIXME: Threads should have only one purpose. When running on Static mode,
         // we are currently not spawning a Map thread and running the code on the
@@ -229,13 +229,13 @@ void Map::run() {
 
     EnvironmentScope mapScope(*env, threadType, threadName);
 
-    if (mode == Mode::Continuous) {
+    if (data->mode == MapMode::Continuous) {
         checkForPause();
     }
 
     auto styleInfo = data->getStyleInfo();
 
-    if (mode == Mode::Static && !context->style && (styleInfo.url.empty() && styleInfo.json.empty())) {
+    if (data->mode == MapMode::Static && !context->style && (styleInfo.url.empty() && styleInfo.json.empty())) {
         throw util::Exception("Style is not set");
     }
 
@@ -246,7 +246,7 @@ void Map::run() {
     setup();
     prepare();
 
-    if (mode == Mode::Continuous) {
+    if (data->mode == MapMode::Continuous) {
         terminating = false;
         while(!terminating) {
             uv_run(env->loop, UV_RUN_DEFAULT);
@@ -261,9 +261,9 @@ void Map::run() {
 
     // If the map rendering wasn't started asynchronously, we perform one render
     // *after* all events have been processed.
-    if (mode == Mode::Static) {
+    if (data->mode == MapMode::Static) {
         render();
-        mode = Mode::None;
+        data->mode = MapMode::None;
     }
 
     view.deactivate();
@@ -623,7 +623,7 @@ std::chrono::steady_clock::duration Map::getDefaultTransitionDuration() {
 void Map::triggerUpdate(const Update u) {
     updated |= static_cast<UpdateType>(u);
 
-    if (mode == Mode::Static) {
+    if (data->mode == MapMode::Static) {
         prepare();
     } else if (asyncUpdate) {
         asyncUpdate->send();
@@ -777,7 +777,7 @@ void Map::prepare() {
         updateTiles();
     }
 
-    if (mode == Mode::Continuous) {
+    if (data->mode == MapMode::Continuous) {
         view.invalidate();
     }
 }
