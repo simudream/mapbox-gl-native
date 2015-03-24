@@ -19,6 +19,7 @@ class LineAtlas;
 class TexturePool;
 class Painter;
 class Sprite;
+class Style;
 class StyleSource;
 class StyleLayerGroup;
 
@@ -38,6 +39,7 @@ public:
     const std::unique_ptr<TexturePool> texturePool;
     const std::unique_ptr<Painter> painter;
     util::ptr<Sprite> sprite;
+    util::ptr<Style> style;
     std::set<util::ptr<StyleSource>> activeSources;
 };
 

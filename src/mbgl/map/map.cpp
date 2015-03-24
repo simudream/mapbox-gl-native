@@ -84,7 +84,7 @@ Map::~Map() {
         "MapandMain");
 
     // Explicitly reset all pointers.
-    style.reset();
+    context->style.reset();
     context.reset();
 
     uv_run(env->loop, UV_RUN_DEFAULT);
@@ -108,7 +108,7 @@ void Map::start(bool startPaused) {
         assert(Environment::currentlyOn(ThreadType::Map));
 
         // Remove all of these to make sure they are destructed in the correct thread.
-        style.reset();
+        context->style.reset();
         context->workers.reset();
         context->activeSources.clear();
 
@@ -235,7 +235,7 @@ void Map::run() {
 
     auto styleInfo = data->getStyleInfo();
 
-    if (mode == Mode::Static && !style && (styleInfo.url.empty() && styleInfo.json.empty())) {
+    if (mode == Mode::Static && !context->style && (styleInfo.url.empty() && styleInfo.json.empty())) {
         throw util::Exception("Style is not set");
     }
 
@@ -356,7 +356,7 @@ std::string Map::getStyleJSON() const {
 util::ptr<Sprite> Map::getSprite() {
     assert(Environment::currentlyOn(ThreadType::Map));
     const float pixelRatio = data->getTransformState().getPixelRatio();
-    const std::string &sprite_url = style->getSpriteURL();
+    const std::string &sprite_url = context->style->getSpriteURL();
     if (!context->sprite || !context->sprite->hasPixelRatio(pixelRatio)) {
         context->sprite = Sprite::Create(sprite_url, pixelRatio, *env);
     }
@@ -663,8 +663,8 @@ void Map::updateSources() {
     }
 
     // Then, reenable all of those that we actually use when drawing this layer.
-    if (style) {
-        context->updateSources(style->layers);
+    if (context->style) {
+        context->updateSources(context->style->layers);
     }
 
     // Then, construct or destroy the actual source object, depending on enabled state.
@@ -691,8 +691,9 @@ void Map::updateSources() {
 void Map::updateTiles() {
     assert(Environment::currentlyOn(ThreadType::Map));
     for (const auto &source : context->activeSources) {
-        source->source->update(*data, context->getWorker(), style, *context->glyphAtlas, *context->glyphStore,
-                               *context->spriteAtlas, getSprite(), *context->texturePool, [this]() {
+        source->source->update(*data, context->getWorker(), context->style, *context->glyphAtlas,
+                               *context->glyphStore, *context->spriteAtlas, getSprite(),
+                               *context->texturePool, [this]() {
             assert(Environment::currentlyOn(ThreadType::Map));
             triggerUpdate();
         });
@@ -710,7 +711,7 @@ void Map::update() {
 void Map::reloadStyle() {
     assert(Environment::currentlyOn(ThreadType::Map));
 
-    style = std::make_shared<Style>();
+    context->style = std::make_shared<Style>();
 
     const auto styleInfo = data->getStyleInfo();
 
@@ -733,13 +734,13 @@ void Map::loadStyleJSON(const std::string& json, const std::string& base) {
     assert(Environment::currentlyOn(ThreadType::Map));
 
     context->sprite.reset();
-    style = std::make_shared<Style>();
-    style->base = base;
-    style->loadJSON((const uint8_t *)json.c_str());
-    style->cascadeClasses(data->getClasses());
-    style->setDefaultTransitionDuration(data->getDefaultTransitionDuration());
+    context->style = std::make_shared<Style>();
+    context->style->base = base;
+    context->style->loadJSON((const uint8_t *)json.c_str());
+    context->style->cascadeClasses(data->getClasses());
+    context->style->setDefaultTransitionDuration(data->getDefaultTransitionDuration());
 
-    const std::string glyphURL = util::mapbox::normalizeGlyphsURL(style->glyph_url, getAccessToken());
+    const std::string glyphURL = util::mapbox::normalizeGlyphsURL(context->style->glyph_url, getAccessToken());
     context->glyphStore->setURL(glyphURL);
 
     triggerUpdate();
@@ -757,13 +758,13 @@ void Map::prepare() {
         context->painter->setDebug(data->getDebug());
     }
     if (u & static_cast<UpdateType>(Update::DefaultTransitionDuration)) {
-        if (style) {
-            style->setDefaultTransitionDuration(data->getDefaultTransitionDuration());
+        if (context->style) {
+            context->style->setDefaultTransitionDuration(data->getDefaultTransitionDuration());
         }
     }
     if (u & static_cast<UpdateType>(Update::Classes)) {
-        if (style) {
-            style->cascadeClasses(data->getClasses());
+        if (context->style) {
+            context->style->cascadeClasses(data->getClasses());
         }
     }
 
@@ -778,9 +779,9 @@ void Map::prepare() {
     data->setTransformState(data->transform.currentState());
     auto& state = data->getTransformState();
 
-    if (style) {
+    if (context->style) {
         updateSources();
-        style->updateProperties(state.getNormalizedZoom(), animationTime);
+        context->style->updateProperties(state.getNormalizedZoom(), animationTime);
 
         // Allow the sprite atlas to potentially pull new sprite images if needed.
         context->spriteAtlas->resize(state.getPixelRatio());
@@ -801,10 +802,10 @@ void Map::render() {
     env->performCleanup();
 
     assert(context->painter);
-    context->painter->render(*style, context->activeSources,
+    context->painter->render(*context->style, context->activeSources,
                     data->getTransformState(), data->getAnimationTime());
     // Schedule another rerender when we definitely need a next frame.
-    if (data->transform.needsTransition() || style->hasTransitions()) {
+    if (data->transform.needsTransition() || context->style->hasTransitions()) {
         triggerUpdate();
     }
 }

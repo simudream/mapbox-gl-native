@@ -22,8 +22,6 @@
 namespace mbgl {
 
 class Sprite;
-class Style;
-class StyleLayerGroup;
 class FileSource;
 class View;
 class Environment;
@@ -220,8 +218,6 @@ private:
 
     // Stores whether the map thread has been stopped already.
     std::atomic_bool isStopped;
-
-    util::ptr<Style> style;
 
     std::atomic<UpdateType> updated;
 };
