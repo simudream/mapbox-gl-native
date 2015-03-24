@@ -5,6 +5,10 @@
 
 #include <set>
 
+namespace uv {
+class worker;
+}
+
 namespace mbgl {
 
 class Environment;
@@ -22,7 +26,10 @@ class MapContext {
 public:
     MapContext(Environment&);
 
+    uv::worker& getWorker();
+
 public:
+    std::unique_ptr<uv::worker> workers;
     const std::unique_ptr<GlyphStore> glyphStore;
     const std::unique_ptr<GlyphAtlas> glyphAtlas;
     const std::unique_ptr<SpriteAtlas> spriteAtlas;

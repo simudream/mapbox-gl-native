@@ -29,4 +29,9 @@ MapContext::MapContext(Environment& env)
       painter(util::make_unique<Painter>(*spriteAtlas, *glyphAtlas, *lineAtlas)) {
 }
 
+uv::worker& MapContext::getWorker() {
+    assert(workers);
+    return *workers;
+}
+
 }

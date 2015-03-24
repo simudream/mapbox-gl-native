@@ -85,17 +85,11 @@ Map::~Map() {
 
     // Explicitly reset all pointers.
     style.reset();
-    workers.reset();
     context.reset();
 
     uv_run(env->loop, UV_RUN_DEFAULT);
 
     env->performCleanup();
-}
-
-uv::worker &Map::getWorker() {
-    assert(workers);
-    return *workers;
 }
 
 void Map::start(bool startPaused) {
@@ -115,7 +109,7 @@ void Map::start(bool startPaused) {
 
         // Remove all of these to make sure they are destructed in the correct thread.
         style.reset();
-        workers.reset();
+        context->workers.reset();
         context->activeSources.clear();
 
         terminating = true;
@@ -247,7 +241,7 @@ void Map::run() {
 
     view.activate();
 
-    workers = util::make_unique<uv::worker>(env->loop, 4, "Tile Worker");
+    context->workers = util::make_unique<uv::worker>(env->loop, 4, "Tile Worker");
 
     setup();
     prepare();
@@ -711,7 +705,7 @@ void Map::updateSources(const util::ptr<StyleLayerGroup> &group) {
 void Map::updateTiles() {
     assert(Environment::currentlyOn(ThreadType::Map));
     for (const auto &source : context->activeSources) {
-        source->source->update(*data, getWorker(), style, *context->glyphAtlas, *context->glyphStore,
+        source->source->update(*data, context->getWorker(), style, *context->glyphAtlas, *context->glyphStore,
                                *context->spriteAtlas, getSprite(), *context->texturePool, [this]() {
             assert(Environment::currentlyOn(ThreadType::Map));
             triggerUpdate();
