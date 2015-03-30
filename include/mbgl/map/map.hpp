@@ -104,6 +104,7 @@ public:
     std::chrono::steady_clock::duration getDefaultTransitionDuration();
     void setStyleURL(const std::string& url);
     void setStyleJSON(const std::string& json, const std::string& base = "");
+    std::string getStyleURL() const;
     std::string getStyleJSON() const;
 
     // Transition

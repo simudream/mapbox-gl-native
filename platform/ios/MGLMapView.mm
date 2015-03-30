@@ -43,13 +43,22 @@ const std::string &defaultCacheDatabase() {
 static dispatch_once_t loadGLExtensions;
 
 NSString *const MGLDefaultStyleName = @"Emerald";
-NSString *const MGLStyleVersion = @"v7";
+NSString *const MGLStyleVersion = @"7";
 NSString *const MGLDefaultStyleMarkerSymbolName = @"default_marker";
 
 NSTimeInterval const MGLAnimationDuration = 0.3;
 const CGSize MGLAnnotationUpdateViewportOutset = {150, 150};
 
 NSString *const MGLAnnotationIDKey = @"MGLAnnotationIDKey";
+
+@implementation NSString (MGLAdditions)
+
+- (NSString *)stringOrNilIfEmpty
+{
+    return self.length ? self : nil;
+}
+
+@end
 
 #pragma mark - Private -
 
@@ -105,7 +114,7 @@ mbgl::DefaultFileSource *mbglFileSource = nullptr;
 
     if (self && [self commonInit])
     {
-        if (accessToken) [self setAccessToken:accessToken];
+        [self _setAccessToken:accessToken];
 
         if (styleJSON || accessToken)
         {
@@ -113,6 +122,9 @@ mbgl::DefaultFileSource *mbglFileSource = nullptr;
             // token, we can pass nil and use the default style.
             //
             [self setStyleJSON:styleJSON];
+            
+            // start the main loop
+            mbglMap->start();
         }
     }
 
@@ -125,8 +137,10 @@ mbgl::DefaultFileSource *mbglFileSource = nullptr;
     
     if (self && [self commonInit])
     {
-        if (accessToken) [self setAccessToken:accessToken];
-        if (styleName) [self useBundledStyleNamed:styleName];
+        [self _setAccessToken:accessToken];
+        if (styleName) [self _setStyleName:styleName];
+        
+        if (styleName || accessToken) mbglMap->start();
     }
     
     return self;
@@ -149,27 +163,41 @@ mbgl::DefaultFileSource *mbglFileSource = nullptr;
     return nil;
 }
 
+- (NSString *)accessToken
+{
+    return @(mbglMap->getAccessToken().c_str()).stringOrNilIfEmpty;
+}
+
 - (void)setAccessToken:(NSString *)accessToken
 {
-    if (accessToken)
-    {
-        mbglMap->setAccessToken((std::string)[accessToken UTF8String]);
-        [MGLMapboxEvents setToken:accessToken];
+    [self _setAccessToken:accessToken];
+    if (accessToken.length && ![self styleURL] && mbglMap->getStyleJSON().empty()) {
+        [self setStyleJSON:nil];
+        mbglMap->start();
     }
+}
+
+- (void)_setAccessToken:(NSString *)accessToken
+{
+    mbglMap->setAccessToken((std::string)[accessToken UTF8String]);
+    [MGLMapboxEvents setToken:accessToken.stringOrNilIfEmpty];
 }
 
 - (void)setStyleJSON:(NSString *)styleJSON
 {
     if ( ! styleJSON)
     {
-        [self useBundledStyleNamed:[[[MGLDefaultStyleName lowercaseString]
-                                        stringByAppendingString:@"-"]
-                                        stringByAppendingString:MGLStyleVersion]];
+        [self _setStyleName:[NSString stringWithFormat:@"%@-v%@", MGLDefaultStyleName.lowercaseString, MGLStyleVersion]];
     }
     else
     {
         mbglMap->setStyleJSON((std::string)[styleJSON UTF8String]);
     }
+}
+
+- (NSString *)styleURL
+{
+    return @(mbglMap->getStyleURL().c_str()).stringOrNilIfEmpty;
 }
 
 - (void)setStyleURL:(NSString *)filePathURL
@@ -347,9 +375,6 @@ mbgl::DefaultFileSource *mbglFileSource = nullptr;
     //
     _regionChangeDelegateQueue = [NSOperationQueue new];
     _regionChangeDelegateQueue.maxConcurrentOperationCount = 1;
-
-    // start the main loop
-    mbglMap->start();
 
     // metrics: map load event
     const mbgl::LatLng latLng = mbglMap->getLatLng();
@@ -1291,7 +1316,32 @@ CLLocationCoordinate2D latLngToCoordinate(mbgl::LatLng latLng)
     return [NSArray arrayWithArray:_bundledStyleNames];
 }
 
-- (void)useBundledStyleNamed:(NSString *)styleName
+- (NSString *)styleName
+{
+    NSURL *styleURL = [NSURL URLWithString:self.styleURL];
+    NSString *styleName;
+    if ([styleURL.scheme isEqualToString:@"asset"])
+    {
+        styleName = styleURL.lastPathComponent.stringByDeletingPathExtension;
+    }
+    else if ([styleURL.scheme isEqualToString:@"mapbox"]) {
+        styleName = styleURL.host;
+    }
+    return styleName.stringOrNilIfEmpty;
+}
+
+- (void)setStyleName:(NSString *)styleName
+{
+    if (self.accessToken.length || self.styleURL.length) {
+        mbglMap->stop();
+    }
+    [self _setStyleName:styleName];
+    if (styleName.length) {
+        mbglMap->start();
+    }
+}
+
+- (void)_setStyleName:(NSString *)styleName
 {
     NSString *hybridStylePrefix = @"hybrid-";
     BOOL isHybrid = [styleName hasPrefix:hybridStylePrefix];

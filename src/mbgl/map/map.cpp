@@ -397,6 +397,10 @@ void Map::setup() {
     painter->setup();
 }
 
+std::string Map::getStyleURL() const {
+    return data->getStyleInfo().url;
+}
+
 void Map::setStyleURL(const std::string &url) {
     assert(Environment::currentlyOn(ThreadType::Main));
 

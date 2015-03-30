@@ -47,7 +47,7 @@
 
 /** Sets a Mapbox API access token for the map view. 
 *   @param accessToken A Mapbox API token. */
-- (void)setAccessToken:(NSString *)accessToken;
+@property (nonatomic) IB_DESIGNABLE NSString *accessToken;
 
 #pragma mark - Managing Constraints
 
@@ -187,7 +187,7 @@
 
 /** Sets the map style to a named, bundled style.
 *   @param styleName The map style name to use. */
-- (void)useBundledStyleNamed:(NSString *)styleName;
+@property (nonatomic) IB_DESIGNABLE NSString *styleName;
 
 #pragma mark - Annotating the Map
 
