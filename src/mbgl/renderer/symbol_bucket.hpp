@@ -9,6 +9,7 @@
 #include <mbgl/geometry/icon_buffer.hpp>
 #include <mbgl/text/types.hpp>
 #include <mbgl/text/glyph.hpp>
+#include <mbgl/text/shaping.hpp>
 #include <mbgl/style/style_bucket.hpp>
 #include <mbgl/util/ptr.hpp>
 
@@ -82,8 +83,9 @@ private:
                                                const FilterExpression&,
                                                GlyphStore&,
                                                const Sprite&);
-
-    void addFeature(const std::vector<Coordinate> &line, const Shaping &shaping, const GlyphPositions &face, const Rect<uint16_t> &image);
+    void addFeature(const std::vector<std::vector<Coordinate>> &lines,
+            const Shaping &shapedText, const PositionedIcon &shapedIcon,
+            const GlyphPositions &face);
 
     // Adds placed items to the buffer.
     template <typename Buffer, typename GroupType>
