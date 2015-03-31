@@ -133,6 +133,19 @@ mbgl::DefaultFileSource *mbglFileSource = nullptr;
     return self;
 }
 
+- (instancetype)initWithFrame:(CGRect)frame accessToken:(NSString *)accessToken styleURL:(NSURL *)styleURL
+{
+    self = [super initWithFrame:frame];
+
+    if (self && [self commonInit])
+    {
+        [self setAccessToken:accessToken];
+        if (styleURL) [self setStyleURL:styleURL];
+    }
+
+    return self;
+}
+
 - (instancetype)initWithFrame:(CGRect)frame accessToken:(NSString *)accessToken
 {
     return [self initWithFrame:frame accessToken:accessToken styleJSON:nil];
@@ -173,14 +186,24 @@ mbgl::DefaultFileSource *mbglFileSource = nullptr;
     }
 }
 
-- (NSString *)styleURL
+- (NSURL *)styleURL
 {
-    return @(mbglMap->getStyleURL().c_str()).mgl_stringOrNilIfEmpty;
+    NSString *styleURLString = @(mbglMap->getStyleURL().c_str()).mgl_stringOrNilIfEmpty;
+    return [NSURL URLWithString:styleURLString];
 }
 
-- (void)setStyleURL:(NSString *)filePathURL
+- (void)setStyleURL:(NSURL *)styleURL
 {
-    mbglMap->setStyleURL(std::string("asset://") + [filePathURL UTF8String]);
+    std::string styleURLString([[styleURL absoluteString] UTF8String]);
+
+    if ( ! [styleURL scheme])
+    {
+        mbglMap->setStyleURL(std::string("asset://") + styleURLString);
+    }
+    else
+    {
+        mbglMap->setStyleURL(styleURLString);
+    }
 }
 
 - (BOOL)commonInit
@@ -1299,7 +1322,7 @@ CLLocationCoordinate2D latLngToCoordinate(mbgl::LatLng latLng)
 
 - (NSString *)styleName
 {
-    NSURL *styleURL = [NSURL URLWithString:self.styleURL];
+    NSURL *styleURL = self.styleURL;
     NSString *styleName;
     if ([styleURL.scheme isEqualToString:@"asset"])
     {
@@ -1318,7 +1341,7 @@ CLLocationCoordinate2D latLngToCoordinate(mbgl::LatLng latLng)
     if (isHybrid) {
         styleName = [@"satellite-" stringByAppendingString:[styleName substringFromIndex:[hybridStylePrefix length]]];
     }
-    [self setStyleURL:[NSString stringWithFormat:@"styles/%@.json", styleName]];
+    [self setStyleURL:[NSURL URLWithString:[NSString stringWithFormat:@"styles/%@.json", styleName]]];
     if (isHybrid) {
         [self setStyleClasses:@[@"contours", @"labels"]];
     }
