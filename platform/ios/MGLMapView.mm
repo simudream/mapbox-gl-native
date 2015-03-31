@@ -126,8 +126,8 @@ mbgl::DefaultFileSource *mbglFileSource = nullptr;
 
     if (self && [self commonInit])
     {
-        [self setAccessToken:accessToken];
-        [self setStyleURL:styleURL];
+        self.accessToken = accessToken;
+        self.styleURL = styleURL;
     }
 
     return self;
@@ -139,6 +139,7 @@ mbgl::DefaultFileSource *mbglFileSource = nullptr;
 
     if (self && [self commonInit])
     {
+        self.styleURL = nil;
         return self;
     }
 
@@ -157,7 +158,7 @@ mbgl::DefaultFileSource *mbglFileSource = nullptr;
 }
 
 + (NSSet *)keyPathsForValuesAffectingStyleURL {
-    return [NSSet setWithObjects:@"styleID", @"accessToken", nil];
+    return [NSSet setWithObjects:@"mapID", @"accessToken", nil];
 }
 
 - (NSURL *)styleURL
@@ -1278,17 +1279,17 @@ CLLocationCoordinate2D latLngToCoordinate(mbgl::LatLng latLng)
     return [NSArray arrayWithArray:_bundledStyleNames];
 }
 
-+ (NSSet *)keyPathsForValuesAffectingStyleID {
++ (NSSet *)keyPathsForValuesAffectingMapID {
     return [NSSet setWithObjects:@"styleURL", @"accessToken", nil];
 }
 
-- (NSString *)styleID {
+- (NSString *)mapID {
     NSURL *styleURL = self.styleURL;
     return [styleURL.scheme isEqualToString:@"mapbox"] ? styleURL.host.mgl_stringOrNilIfEmpty : nil;
 }
 
-- (void)setStyleID:(NSString *)styleID {
-    self.styleURL = [NSURL URLWithString:[NSString stringWithFormat:@"mapbox://%@", styleID]];
+- (void)setMapID:(NSString *)mapID {
+    self.styleURL = [NSURL URLWithString:[NSString stringWithFormat:@"mapbox://%@", mapID]];
 }
 
 - (NSArray *)getAppliedStyleClasses

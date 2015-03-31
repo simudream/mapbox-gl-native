@@ -168,7 +168,7 @@
  
     The style may lack a map ID if it is located at an HTTP, HTTPS, or asset: URL. Use -styleURL to get the URL in these cases.
  */
-@property (nonatomic) IB_DESIGNABLE NSString *styleID;
+@property (nonatomic) IB_DESIGNABLE NSString *mapID;
 
 /** Returns the names of the styles bundled with the library. */
 - (NSArray *)bundledStyleNames;
