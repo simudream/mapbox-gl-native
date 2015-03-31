@@ -15,6 +15,7 @@
 #include <mbgl/util/geo.hpp>
 
 #import "MGLTypes.h"
+#import "NSString+MGLAdditions.h"
 #import "MGLAnnotation.h"
 #import "MGLUserLocationAnnotationView.h"
 #import "MGLUserLocation_Private.h"
@@ -50,15 +51,6 @@ NSTimeInterval const MGLAnimationDuration = 0.3;
 const CGSize MGLAnnotationUpdateViewportOutset = {150, 150};
 
 NSString *const MGLAnnotationIDKey = @"MGLAnnotationIDKey";
-
-@implementation NSString (MGLAdditions)
-
-- (NSString *)stringOrNilIfEmpty
-{
-    return self.length ? self : nil;
-}
-
-@end
 
 #pragma mark - Private -
 
@@ -160,13 +152,13 @@ mbgl::DefaultFileSource *mbglFileSource = nullptr;
 
 - (NSString *)accessToken
 {
-    return @(mbglMap->getAccessToken().c_str()).stringOrNilIfEmpty;
+    return @(mbglMap->getAccessToken().c_str()).mgl_stringOrNilIfEmpty;
 }
 
 - (void)setAccessToken:(NSString *)accessToken
 {
     mbglMap->setAccessToken((std::string)[accessToken UTF8String]);
-    [MGLMapboxEvents setToken:accessToken.stringOrNilIfEmpty];
+    [MGLMapboxEvents setToken:accessToken.mgl_stringOrNilIfEmpty];
 }
 
 - (void)setStyleJSON:(NSString *)styleJSON
@@ -183,7 +175,7 @@ mbgl::DefaultFileSource *mbglFileSource = nullptr;
 
 - (NSString *)styleURL
 {
-    return @(mbglMap->getStyleURL().c_str()).stringOrNilIfEmpty;
+    return @(mbglMap->getStyleURL().c_str()).mgl_stringOrNilIfEmpty;
 }
 
 - (void)setStyleURL:(NSString *)filePathURL
@@ -1316,7 +1308,7 @@ CLLocationCoordinate2D latLngToCoordinate(mbgl::LatLng latLng)
     else if ([styleURL.scheme isEqualToString:@"mapbox"]) {
         styleName = styleURL.host;
     }
-    return styleName.stringOrNilIfEmpty;
+    return styleName.mgl_stringOrNilIfEmpty;
 }
 
 - (void)setStyleName:(NSString *)styleName
