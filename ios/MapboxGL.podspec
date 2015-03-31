@@ -11,7 +11,7 @@ Pod::Spec.new do |m|
   m.screenshot       = 'https://raw.githubusercontent.com/mapbox/mapbox-gl-native/master/ios/screenshot.png'
   m.social_media_url = 'https://twitter.com/mapbox'
 
-  m.source = { :http => "file:///Users/mxn/hub/mapbox-gl-native/build/ios/pkg/mapbox-gl-ios-#{m.version.to_s}.zip" }
+  m.source = { :http => "http://mapbox.s3.amazonaws.com/mapbox-gl-native/ios/mapbox-gl-ios-#{m.version.to_s}.zip" }
 
   m.platform              = :ios
   m.ios.deployment_target = '7.0'
