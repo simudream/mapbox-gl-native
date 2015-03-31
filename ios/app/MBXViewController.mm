@@ -246,7 +246,7 @@ mbgl::Settings_NSUserDefaults *settings = nullptr;
         styleName = [kStyleNames objectAtIndex:index];
     }
 
-    self.mapView.styleName = [NSString stringWithFormat:@"%@-v%@", styleName.lowercaseString, kStyleVersion];
+    self.mapView.styleURL = [NSURL URLWithString:[NSString stringWithFormat:@"styles/%@-v%@.json", styleName.lowercaseString, kStyleVersion]];
 
     [titleButton setTitle:styleName forState:UIControlStateNormal];
 }
