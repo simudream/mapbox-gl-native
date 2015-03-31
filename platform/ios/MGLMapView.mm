@@ -114,7 +114,7 @@ mbgl::DefaultFileSource *mbglFileSource = nullptr;
 
     if (self && [self commonInit])
     {
-        [self _setAccessToken:accessToken];
+        [self setAccessToken:accessToken];
 
         if (styleJSON || accessToken)
         {
@@ -122,9 +122,6 @@ mbgl::DefaultFileSource *mbglFileSource = nullptr;
             // token, we can pass nil and use the default style.
             //
             [self setStyleJSON:styleJSON];
-            
-            // start the main loop
-            mbglMap->start();
         }
     }
 
@@ -137,10 +134,8 @@ mbgl::DefaultFileSource *mbglFileSource = nullptr;
     
     if (self && [self commonInit])
     {
-        [self _setAccessToken:accessToken];
-        if (styleName) [self _setStyleName:styleName];
-        
-        if (styleName || accessToken) mbglMap->start();
+        [self setAccessToken:accessToken];
+        if (styleName) [self setStyleName:styleName];
     }
     
     return self;
@@ -170,15 +165,6 @@ mbgl::DefaultFileSource *mbglFileSource = nullptr;
 
 - (void)setAccessToken:(NSString *)accessToken
 {
-    [self _setAccessToken:accessToken];
-    if (accessToken.length && ![self styleURL] && mbglMap->getStyleJSON().empty()) {
-        [self setStyleJSON:nil];
-        mbglMap->start();
-    }
-}
-
-- (void)_setAccessToken:(NSString *)accessToken
-{
     mbglMap->setAccessToken((std::string)[accessToken UTF8String]);
     [MGLMapboxEvents setToken:accessToken.stringOrNilIfEmpty];
 }
@@ -187,7 +173,7 @@ mbgl::DefaultFileSource *mbglFileSource = nullptr;
 {
     if ( ! styleJSON)
     {
-        [self _setStyleName:[NSString stringWithFormat:@"%@-v%@", MGLDefaultStyleName.lowercaseString, MGLStyleVersion]];
+        [self setStyleName:[NSString stringWithFormat:@"%@-v%@", MGLDefaultStyleName.lowercaseString, MGLStyleVersion]];
     }
     else
     {
@@ -240,7 +226,7 @@ mbgl::DefaultFileSource *mbglFileSource = nullptr;
     }
     _glView.delegate = self;
     [_glView bindDrawable];
-    [self insertSubview:_glView atIndex:0];
+    [self addSubview:_glView];
 
     _glView.contentMode = UIViewContentModeCenter;
     [self setBackgroundColor:[UIColor clearColor]];
@@ -375,6 +361,9 @@ mbgl::DefaultFileSource *mbglFileSource = nullptr;
     //
     _regionChangeDelegateQueue = [NSOperationQueue new];
     _regionChangeDelegateQueue.maxConcurrentOperationCount = 1;
+
+    // start the main loop
+    mbglMap->start();
 
     // metrics: map load event
     const mbgl::LatLng latLng = mbglMap->getLatLng();
@@ -1331,17 +1320,6 @@ CLLocationCoordinate2D latLngToCoordinate(mbgl::LatLng latLng)
 }
 
 - (void)setStyleName:(NSString *)styleName
-{
-    if (self.accessToken.length || self.styleURL.length) {
-        mbglMap->stop();
-    }
-    [self _setStyleName:styleName];
-    if (styleName.length) {
-        mbglMap->start();
-    }
-}
-
-- (void)_setStyleName:(NSString *)styleName
 {
     NSString *hybridStylePrefix = @"hybrid-";
     BOOL isHybrid = [styleName hasPrefix:hybridStylePrefix];
