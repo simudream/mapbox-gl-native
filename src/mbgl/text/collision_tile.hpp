@@ -41,8 +41,8 @@ class CollisionTile {
     void placeFeature(CollisionFeature &feature);
     void insertFeature(CollisionFeature &feature, const float minPlacementScale);
 
-    const float tilePixelRatio;
     const float zoom;
+    const float tilePixelRatio;
     float angle = 0;
 
     private:
