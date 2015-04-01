@@ -52,5 +52,5 @@ elif [[ ${TRAVIS_OS_NAME} == "osx" && ${TEST_OS} == "ios" ]]; then
     git submodule update --init test/ios/KIF
 
     mapbox_time "run_ios_tests" \
-    ./scripts/test_ios.sh | xcpretty -c
+    ./scripts/test_ios.sh
 fi
