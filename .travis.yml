@@ -38,7 +38,16 @@ matrix:
       env: BUILDTYPE=Debug JOBS=8 TEST_OS=osx
       compiler: clang
     - os: osx
-      env: BUILDTYPE=Debug JOBS=8 TEST_OS=ios
+      env: BUILDTYPE=Debug JOBS=8 TEST_OS=ios FORM=iPhone REV=5s VERSION=8.1
+      compiler: clang
+    - os: osx
+      env: BUILDTYPE=Debug JOBS=8 TEST_OS=ios FORM=iPhone REV=5s VERSION=7.1
+      compiler: clang
+    - os: osx
+      env: BUILDTYPE=Debug JOBS=8 TEST_OS=ios FORM=iPad REV=2 VERSION=8.1
+      compiler: clang
+    - os: osx
+      env: BUILDTYPE=Debug JOBS=8 TEST_OS=ios FORM=iPad REV=2 VERSION=7.1
       compiler: clang
 
 env:
