@@ -33,7 +33,7 @@ export BUILDTYPE=${BUILDTYPE:-Release}
 export HOST=ios
 make Xcode/mbgl
 
-step "Building iOS targets..."
+step "Building iOS device targets..."
 xcodebuild -sdk iphoneos${IOS_SDK_VERSION} \
     ARCHS="arm64 armv7 armv7s" \
     -project ./build/ios/mbgl.xcodeproj \

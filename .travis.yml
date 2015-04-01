@@ -35,7 +35,10 @@ matrix:
       env: BUILDTYPE=Release JOBS=8
       compiler: gcc
     - os: osx
-      env: BUILDTYPE=Debug JOBS=8
+      env: BUILDTYPE=Debug JOBS=8 TEST_OS=osx
+      compiler: clang
+    - os: osx
+      env: BUILDTYPE=Debug JOBS=8 TEST_OS=ios
       compiler: clang
 
 env:
@@ -65,6 +68,7 @@ before_install:
 - ./scripts/travis_before_install.sh
 - if [[ ${TRAVIS_OS_NAME} == "linux" && ${MASON_PLATFORM} != "android" ]]; then export LD_LIBRARY_PATH=`mason prefix mesa 10.4.3`/lib; fi
 - if [[ ${TRAVIS_OS_NAME} == "linux" && ${MASON_PLATFORM} != "android" ]]; then glxinfo; fi
+- if [[ ${TRAVIS_OS_NAME} == "osx" ]]; then gem install xcpretty --no-rdoc --no-ri --no-document --quiet; fi
 
 install:
 - ulimit -c
